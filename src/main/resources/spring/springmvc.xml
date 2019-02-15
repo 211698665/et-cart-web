@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:dubbo="http://code.alibabatech.com/schema/dubbo" 
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+        http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+        http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+
+	<!-- 注意property-placeholder只能使用一次，作用是 加载配置文件,注意如果不加这个文件则不能使用该文件中的属性 -->
+	<context:property-placeholder location="classpath:conf/resource.properties"/>
+	<!-- 配置controller的包扫描 -->
+	<context:component-scan base-package="cn.henu.cart.controller" />
+	<!-- 配置处理器映射器和处理器适配器 -->
+	<mvc:annotation-driven />
+	
+	<!-- 配置视图解析器 -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/jsp/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+	
+	<!-- 配置拦截器 -->
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<!-- 拦截所有的请求 -->
+			<mvc:mapping path="/**"/>
+			<bean class="cn.henu.cart.interceptor.LoginInterceptor"/>
+		</mvc:interceptor>
+	</mvc:interceptors>
+	<!-- 因为上面只拦截html结尾的请求，这里不需要配置静态资源放行 -->
+	
+	<!-- <mvc:resources location="/css/" mapping="/css/**"/>
+	<mvc:resources location="/js/" mapping="/js/**"/> -->
+	<!-- springmvc的三大组件:处理器映射器，处理器适配器和视图解析器 -->
+	<!-- 引用dubbo服务 -->
+	<dubbo:application name="et-cart-web"/>
+	<dubbo:registry protocol="zookeeper" address="192.168.25.129:2181"/>
+	<dubbo:reference interface="cn.henu.service.ItemService" id="itemService" /> 
+	<dubbo:reference interface="cn.henu.sso.service.TokenService" id="tokenService" /> 
+	<dubbo:reference interface="cn.henu.cart.service.CartService" id="cartService" />
+	
+	<!-- <bean id="handlerAdapter" class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
+		<property name="alwaysUseFullPath" value="true"/>
+	</bean> -->	
+	<!-- 定义文件上传解析器,因为这里是前台一般不需要做文件上传，所以可以省略 -->
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- 设定默认编码 -->
+		<property name="defaultEncoding" value="UTF-8"></property>
+		<!-- 设定文件上传的最大值5MB，5*1024*1024 -->
+		<property name="maxUploadSize" value="5242880"></property>
+	</bean>
+</beans>
